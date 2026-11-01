@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Contratos & OS - Dark Mode</title>
+  <style>
+    :root {
+      --bg: #12181B;            
+      --card-bg: #1E252B;       
+      --card-inner: #161C22;    
+      --text: #F1F5F9;          
+      --text-muted: #94A3B8;    
+      --primary: #3B82F6;       
+      --primary-hover: #2563EB;
+      --border: #2D3748;        
+      
+      --danger-bg: #371B1E;
+      --danger-text: #F87171;
+      --danger-border: #7F1D1D;
+
+      --warning-bg: #362915;
+      --warning-text: #FBBF24;
+      --warning-border: #78350F;
+
+      --success-bg: #132E27;
+      --success-text: #34D399;
+      --success-border: #064E3B;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+
+    header {
+      background-color: var(--card-bg);
+      padding: 1rem 1rem 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .header-title { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+    .backup-actions { display: flex; gap: 0.5rem; }
+
+    .btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      background: var(--card-inner);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    .btn-sm:hover { color: var(--text); border-color: var(--primary); }
+    .btn-icon-only {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    /* NAVEGAÇÃO DE ABAS */
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-top: 0.5rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 0.6rem 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    main { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* CARD DE FILTROS & AÇÕES */
+    .contracts-action-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filters-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    
+    .filter-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-row-bottom {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      border-top: 1px dashed var(--border);
+      padding-top: 0.6rem;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card-inner);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { color: var(--text); }
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .action-buttons-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    /* BOTÕES */
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-danger { background-color: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+    .btn-warning { background-color: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+    .btn-success { background-color: #059669; color: white; }
+
+    /* CARDS & GAVETAS DE CONTRATO */
+    .card-list { display: flex; flex-direction: column; gap: 1rem; }
+    
+    .contract-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .contract-card:active { cursor: grabbing; }
+    .contract-card.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
+    .contract-card.atrasado { border: 1px solid var(--danger-border); }
+    
+    .contract-header-summary {
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .contract-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .contract-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .progress-bar-bg {
+      position: relative;
+      width: 260px;
+      height: 22px;
+      background: var(--card-inner);
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .progress-bar-fill.done { background: var(--success-text); }
+    .progress-text-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      pointer-events: none;
+    }
+    
+    .contract-details-grid {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .contract-details-grid strong { color: var(--text); }
+
+    .contract-drawer-body {
+      display: none;
+      padding: 1.5rem;
+      border-top: 1px dashed var(--border);
+      background-color: rgba(0,0,0,0.15);
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .contract-card.open .contract-drawer-body { display: flex; }
+
+    /* CARDS FLUTUANTES (CASCOS E EQUIPES) COM DRAG AND DROP */
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .simple-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      user-select: none;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+    .simple-card:active { cursor: grabbing; }
+    .simple-card.dragging { opacity: 0.4; border: 2px dashed var(--primary); }
+    .simple-card-actions { display: flex; gap: 0.4rem; }
+
+    /* ATIVIDADES REORGANIZÁVEIS POR DRAG AND DROP */
+    .activities-list { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+    .activity-card {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      cursor: grab;
+      user-select: none;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+    .activity-card:active { cursor: grabbing; }
+    .activity-card.act-dragging { opacity: 0.4; border: 1px dashed var(--primary); }
+    .activity-card.atrasado { border-color: var(--danger-border); background: var(--danger-bg); }
+    .activity-card.paralisada { opacity: 0.65; border-style: dashed; }
+    
+    .activity-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* QUEBRA DE TEXTO NA DESCRIÇÃO DA ATIVIDADE */
+    .activity-desc-area {
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .activity-edit-mode {
+      display: none;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .activity-edit-mode input {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.85rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+    }
+    /* CAIXA DE EDIÇÃO DA DESCRIÇÃO AMPLIADA */
+    .activity-edit-mode input.desc-input { flex: 1; min-width: 240px; }
+    .activity-edit-mode input.date-input { width: 95px; text-align: center; }
+
+    .activity-right {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .activity-prazo {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .pct-btn-group {
+      display: flex;
+      gap: 0.2rem;
+    }
+    .pct-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .pct-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .status-select {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.4rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .activity-actions-inline {
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    /* ESTILOS DA ABA CRONOGRAMA / GANTT */
+    .gantt-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .gantt-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .gantt-contract-block {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .gantt-timeline-row {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+    @media (max-width: 768px) {
+      .gantt-timeline-row { grid-template-columns: 1fr; }
+    }
+    .gantt-bar-track {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      height: 28px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .gantt-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: var(--primary);
+      opacity: 0.35;
+      border-radius: 6px;
+    }
+    .gantt-bar-fill.done { background: var(--success-text); }
+    .gantt-bar-fill.atrasado { background: var(--danger-text); }
+    .gantt-bar-text {
+      position: relative;
+      z-index: 2;
+      padding: 0 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* MODAL / DRAWER */
+    .drawer-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .drawer-overlay.active { display: flex; }
+    .drawer {
+      background: var(--card-bg);
+      width: 90%;
+      max-width: 620px;
+      border-radius: 20px;
+      padding: 2rem;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background-color: var(--card-inner);
+      color: var(--text);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .multiselect-container {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem;
+      max-height: 140px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .multiselect-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .multiselect-item input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+
+    .whatsapp-selection-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 45vh;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .ws-contract-box {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .ws-contract-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: bold;
+      font-size: 0.95rem;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+    .ws-activities-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding-left: 1.75rem;
+      border-left: 2px solid var(--border);
+      margin-top: 0.5rem;
+    }
+    .ws-activity-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .whatsapp-textarea {
+      width: 100%;
+      height: 280px;
+      background: var(--card-inner);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      resize: vertical;
+    }
+
+    .badge-atraso {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      font-size: 0.7rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .arquivados-section {
+      margin-top: 4rem;
+      border-top: 2px solid var(--border);
+      padding-top: 1.5rem;
+      background: var(--bg);
+    }
+
+    /* ESTILIZAÇÃO PARA IMPRESSÃO / PDF */
+    @media print {
+      body * { visibility: hidden; }
+      #whatsappOutputModal, #whatsappOutputModal * { visibility: visible; }
+      #whatsappOutputModal {
+        position: absolute;
+        left: 0; top: 0; width: 100%; height: auto;
+        background: white !important;
+        color: black !important;
+        padding: 0;
+      }
+      #whatsappOutputModal .drawer {
+        background: white !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      .whatsapp-textarea {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        height: auto !important;
+        font-size: 11pt !important;
+      }
+      .close-btn, .drawer-header button, .btn { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="header-top">
+        <h2 class="header-title">🚢 Gestor OS & Contratos</h2>
+        <div class="backup-actions">
+          <button class="btn-sm" onclick="exportarBackup()">💾 Exportar</button>
+          <button class="btn-sm" onclick="document.getElementById('importFileInput').click()">📂 Importar</button>
+          <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importarBackup(event)">
+        </div>
+      </div>
+
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('contratos')">📋 1 - Contratos</button>
+        <button class="tab-btn" onclick="switchTab('recursos')">⚓ 2 - Equipes e Cascos</button>
+        <button class="tab-btn" onclick="switchTab('cronograma')">📈 3 - Cronograma</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ABA 1: CONTRATOS -->
+    <div id="tab-contratos" class="tab-content active">
+      <div class="contracts-action-header">
+        <div class="filters-card">
+          <div class="filter-row-top">
+            <div class="filter-buttons" id="filterSetoresBtns">
+              <button class="filter-btn active" onclick="setFilter('setor', 'todos', this)">Todos os Setores</button>
+              <button class="filter-btn" onclick="setFilter('setor', 'Marcenaria', this)">Marcenaria</button>
+              <button class="filter-btn" onclick="setFilter('setor', 'Serralheria', this)">Serralheria</button>
+              <button class="filter-btn" onclick="setFilter('setor', 'Administração', this)">Administração</button>
+            </div>
+            <div class="filter-buttons" id="filterCascosBtns"></div>
+          </div>
+          <div class="filter-row-bottom" id="filterMembrosBtns"></div>
+        </div>
+
+        <div class="action-buttons-stack">
+          <button class="btn" onclick="openContractDrawer()">➕ Novo</button>
+          <button class="btn btn-success" onclick="openWhatsappSelectionModal()">📲 Gerar O.S</button>
+        </div>
+      </div>
+
+      <div class="card-list" id="contracts-list"></div>
+
+      <div class="arquivados-section">
+        <div class="top-bar">
+          <h3 style="font-size: 1.1rem; color: var(--text-muted);">📦 Contratos Arquivados</h3>
+          <button class="btn-sm" onclick="toggleArquivadosList()" id="btnToggleArqs">🔽 Ver Arquivados (0)</button>
+        </div>
+        <div class="card-list" id="arquivados-list" style="display: none; margin-top: 1rem;"></div>
+      </div>
+    </div>
+
+    <!-- ABA 2: EQUIPES E CASCOS -->
+    <div id="tab-recursos" class="tab-content">
+      <div style="margin-bottom: 2rem;">
+        <div class="top-bar">
+          <h3 style="font-size: 1.1rem; color: var(--text-muted);">Cascos / Embarcações</h3>
+          <button class="btn btn-sm" onclick="openCascoDrawer()">➕ Novo Casco</button>
+        </div>
+        <div class="grid-cards" id="cascos-list"></div>
+      </div>
+
+      <div>
+        <div class="top-bar">
+          <h3 style="font-size: 1.1rem; color: var(--text-muted);">Membros da Equipe por Setor</h3>
+          <button class="btn btn-sm" onclick="openEquipeDrawer()">➕ Novo Membro</button>
+        </div>
+        <div id="equipes-sections-container"></div>
+      </div>
+    </div>
+
+    <!-- ABA 3: CRONOGRAMA / DIAGRAMA DE PRAZOS -->
+    <div id="tab-cronograma" class="tab-content">
+      <div class="gantt-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <h3 class="gantt-section-title" style="margin:0;">📈 Diagrama de Prazos (Cronograma)</h3>
+          <div class="filter-buttons" id="ganttFilterBtns">
+            <button class="filter-btn active" onclick="renderCronograma('todos', this)">Todos</button>
+          </div>
+        </div>
+        <div id="ganttBody" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL 1: SELEÇÃO DE CONTRATOS/ATIVIDADES PARA O WHATSAPP -->
+  <div class="drawer-overlay" id="whatsappSelectionModal">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3>📲 Selecionar Itens para O.S</h3>
+        <button class="close-btn" onclick="closeDrawer('whatsappSelectionModal')">&times;</button>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <button class="btn-sm" onclick="wsSelectAll(true)">✅ Selecionar Todos</button>
+        <button class="btn-sm" onclick="wsSelectPending()">⏳ Pendentes (&lt;100%)</button>
+        <button class="btn-sm" onclick="wsSelectAll(false)">❌ Desmarcar Tudo</button>
+      </div>
+
+      <div class="whatsapp-selection-list" id="whatsappSelectionContainer"></div>
+
+      <button class="btn btn-success" style="width: 100%; justify-content: center;" onclick="generateWhatsappOSFromSelection()">🚀 Prosseguir para Mensagem Formatada</button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: TEXTO FINAL PRONTO PARA COPIAR / PDF -->
+  <div class="drawer-overlay" id="whatsappOutputModal">
+    <div class="drawer" style="max-width: 600px;">
+      <div class="drawer-header">
+        <h3>📋 Mensagem O.S</h3>
+        <button class="close-btn" onclick="closeDrawer('whatsappOutputModal')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Texto formatado (Pronto para copiar ou imprimir):</label>
+        <textarea id="whatsappTextOutput" class="whatsapp-textarea" readonly></textarea>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-success" style="flex:1; justify-content: center;" onclick="copyWhatsappText()">📋 Copiar Texto</button>
+        <button class="btn btn-warning" style="flex:1; justify-content: center;" onclick="window.print()">🖨️ Baixar PDF / Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONTRATO -->
+  <div class="drawer-overlay" id="contractOverlay">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3 id="contractModalTitle">📋 Novo Contrato</h3>
+        <button class="close-btn" onclick="closeDrawer('contractOverlay')">&times;</button>
+      </div>
+      <form id="contractForm" onsubmit="saveContract(event)">
+        <input type="hidden" id="contractId">
+        <div class="form-group">
+          <label>Nome do Contrato</label>
+          <input type="text" id="cNome" class="form-control" required placeholder="Ex: Manutenção Preventiva">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Início (DD/MM/AAAA)</label>
+            <input type="text" id="cInicio" class="form-control" required placeholder="01/11/2026" oninput="formatDateInput(this)">
+          </div>
+          <div class="form-group">
+            <label>Término (DD/MM/AAAA)</label>
+            <input type="text" id="cTermino" class="form-control" required placeholder="30/11/2026" oninput="formatDateInput(this)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Casco / Embarcação</label>
+          <select id="cCasco" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label>Membros / Equipe Responsável (Múltiplos)</label>
+          <div class="multiselect-container" id="cEquipesContainer"></div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+          <button type="button" id="btnDeleteContract" class="btn btn-danger" style="display:none;" onclick="deleteContract()">🗑️ Excluir</button>
+          <button type="submit" class="btn" style="flex:1;">💾 Salvar Contrato</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ADICIONAR ATIVIDADE -->
+  <div class="drawer-overlay" id="activityOverlay">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3 id="actModalTitle">📌 Cadastrar Atividades</h3>
+        <button class="close-btn" onclick="closeDrawer('activityOverlay')">&times;</button>
+      </div>
+      
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem;">
+        <button class="btn-sm" style="flex:1; justify-content:center;" onclick="setActMode('single')">📝 Individual</button>
+        <button class="btn-sm" style="flex:1; justify-content:center;" onclick="setActMode('batch')">📋 Caixa de Texto</button>
+      </div>
+
+      <form id="actSingleForm" onsubmit="saveSingleActivity(event)">
+        <input type="hidden" id="actContractId">
+        <div class="form-group">
+          <label>Descrição da Atividade</label>
+          <input type="text" id="aDesc" class="form-control" required placeholder="Ex: Pintura de fundo">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Início (DD/MM/AAAA)</label>
+            <input type="text" id="aInicio" class="form-control" required placeholder="01/11/2026" maxlength="10" oninput="formatDateInput(this)">
+          </div>
+          <div class="form-group">
+            <label>Término (DD/MM/AAAA)</label>
+            <input type="text" id="aTermino" class="form-control" required placeholder="05/11/2026" maxlength="10" oninput="formatDateInput(this)">
+          </div>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">💾 Salvar Atividade</button>
+      </form>
+
+      <form id="actBatchForm" style="display: none;" onsubmit="saveBatchActivities(event)">
+        <input type="hidden" id="actBatchContractId">
+        <div class="form-group">
+          <label>Cole o bloco de texto (Descrição + Datas DD/MM/AA)</label>
+          <textarea id="batchText" class="form-control" rows="5" placeholder="Troca de anodos 01/11/26 03/11/26&#10;Lixamento de casco 04/11/26 10/11/26" oninput="updateBatchPreview()"></textarea>
+        </div>
+        <div class="preview-box" id="batchPreview">Prévia: Nenhuma atividade detectada.</div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 1.5rem;">📥 Importar Atividades</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CASCO -->
+  <div class="drawer-overlay" id="cascoOverlay">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3 id="cascoModalTitle">⚓ Novo Casco</h3>
+        <button class="close-btn" onclick="closeDrawer('cascoOverlay')">&times;</button>
+      </div>
+      <form onsubmit="saveCasco(event)">
+        <input type="hidden" id="cascoId">
+        <div class="form-group">
+          <label>Nome ou Número da Embarcação/Casco</label>
+          <input type="text" id="cascoNome" class="form-control" required placeholder="Ex: Casco #104 ou MB-Vanguard">
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">💾 Salvar Casco</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EQUIPE / MEMBRO -->
+  <div class="drawer-overlay" id="equipeOverlay">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3 id="equipeModalTitle">👷 Novo Membro</h3>
+        <button class="close-btn" onclick="closeDrawer('equipeOverlay')">&times;</button>
+      </div>
+      <form onsubmit="saveEquipe(event)">
+        <input type="hidden" id="equipeId">
+        <div class="form-group">
+          <label>Nome do Funcionário/Membro</label>
+          <input type="text" id="equipeNome" class="form-control" required placeholder="Ex: João da Silva">
+        </div>
+        <div class="form-group">
+          <label>Setor</label>
+          <select id="equipeCat" class="form-control" required>
+            <option value="Marcenaria">🪵 Marcenaria</option>
+            <option value="Serralheria">🔩 Serralheria</option>
+            <option value="Administração">📊 Administração</option>
+          </select>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">💾 Salvar Membro</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let appData = JSON.parse(localStorage.getItem('app_os_db')) || {
+      contratos: [],
+      cascos: [],
+      equipes: []
+    };
+
+    let activeContractIdToOpen = null;
+    let showArquivados = false;
+
+    let selectedFilters = {
+      casco: 'todos',
+      setor: 'todos',
+      membro: 'todos'
+    };
+
+    let ganttFilter = 'todos';
+
+    function formatSentenceCase(str) {
+      if(!str) return '';
+      const trimmed = str.trim();
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    }
+
+    function formatDateInput(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 8) v = v.substring(0, 8);
+      if (v.length > 4) {
+        input.value = `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4)}`;
+      } else if (v.length > 2) {
+        input.value = `${v.substring(0, 2)}/${v.substring(2)}`;
+      } else {
+        input.value = v;
+      }
+    }
+
+    function openWhatsappSelectionModal() {
+      const activeContracts = appData.contratos.filter(c => !c.arquivado);
+      const container = document.getElementById('whatsappSelectionContainer');
+
+      if(activeContracts.length === 0) {
+        alert('Nenhum contrato ativo cadastrado para gerar O.S.');
+        return;
+      }
+
+      container.innerHTML = activeContracts.map(c => {
+        const equipeStr = Array.isArray(c.equipe) ? c.equipe.join(' e ') : c.equipe;
+        return `
+          <div class="ws-contract-box">
+            <label class="ws-contract-header">
+              <input type="checkbox" class="ws-contract-chk" data-cid="${c.id}" checked onchange="toggleWsContract(${c.id}, this.checked)">
+              📋 ${c.nome} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${c.casco} | 👤 ${equipeStr})</span>
+            </label>
+            <div class="ws-activities-box" id="ws-acts-${c.id}">
+              ${c.atividades && c.atividades.length > 0 ? c.atividades.map(a => {
+                const isChecked = a.pct < 100 ? 'checked' : '';
+                return `
+                  <label class="ws-activity-item">
+                    <input type="checkbox" class="ws-act-chk" data-cid="${c.id}" data-aid="${a.id}" ${isChecked}>
+                    📌 ${a.descricao} (${a.pct}%)
+                  </label>
+                `;
+              }).join('') : '<span style="font-size:0.8rem; color:var(--text-muted);">Sem atividades cadastradas.</span>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('whatsappSelectionModal').classList.add('active');
+    }
+
+    function toggleWsContract(contractId, isChecked) {
+      const checkboxes = document.querySelectorAll(`.ws-act-chk[data-cid="${contractId}"]`);
+      checkboxes.forEach(chk => chk.checked = isChecked);
+    }
+
+    function wsSelectAll(select) {
+      document.querySelectorAll('#whatsappSelectionContainer input[type="checkbox"]').forEach(chk => chk.checked = select);
+    }
+
+    function wsSelectPending() {
+      const activeContracts = appData.contratos.filter(c => !c.arquivado);
+      activeContracts.forEach(c => {
+        const cChk = document.querySelector(`.ws-contract-chk[data-cid="${c.id}"]`);
+        let hasPending = false;
+
+        if(c.atividades) {
+          c.atividades.forEach(a => {
+            const aChk = document.querySelector(`.ws-act-chk[data-cid="${c.id}"][data-aid="${a.id}"]`);
+            if(aChk) {
+              const pending = a.pct < 100;
+              aChk.checked = pending;
+              if(pending) hasPending = true;
+            }
+          });
+        }
+        if(cChk) cChk.checked = hasPending;
+      });
+    }
+
+    function generateWhatsappOSFromSelection() {
+      const activeContracts = appData.contratos.filter(c => !c.arquivado);
+      const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+      let text = `📋 *ORDEM DE SERVIÇO TOWING* — ${dataHoje}\n`;
+      let hasContent = false;
+
+      activeContracts.forEach(c => {
+        const cChk = document.querySelector(`.ws-contract-chk[data-cid="${c.id}"]`);
+        if(!cChk || !cChk.checked) return;
+
+        const selectedActs = [];
+        if(c.atividades) {
+          c.atividades.forEach(a => {
+            const aChk = document.querySelector(`.ws-act-chk[data-cid="${c.id}"][data-aid="${a.id}"]`);
+            if(aChk && aChk.checked) {
+              selectedActs.push(a);
+            }
+          });
+        }
+
+        if(selectedActs.length === 0) return;
+
+        hasContent = true;
+        const equipeList = Array.isArray(c.equipe) ? c.equipe.join(' e ') : c.equipe;
+
+        let totalPct = 0;
+        if(c.atividades && c.atividades.length > 0) {
+          const sumPct = c.atividades.reduce((acc, a) => acc + (a.pct || 0), 0);
+          totalPct = Math.round(sumPct / c.atividades.length);
+        }
+
+        text += `\n👤 *${equipeList.toUpperCase()}*\n`;
+        text += `*${c.nome}* | Casco: ${c.casco} (${totalPct}% ⏳)\n`;
+
+        selectedActs.forEach(a => {
+          let statusIcon = '🛠️';
+          if (a.pct === 100) {
+            statusIcon = '✅';
+          } else if (a.status === 'Paralisada') {
+            statusIcon = '⏸️';
+          } else if (isOverdue(a.termino, a.pct, a.status)) {
+            statusIcon = '⚠️';
+          }
+
+          const inicioCurto = a.inicio ? a.inicio.substring(0, 5) : '';
+          const terminoCurto = a.termino ? a.termino.substring(0, 5) : '';
+          text += `▫️ ${a.descricao} (${inicioCurto} a ${terminoCurto}) - ${a.pct}% ${statusIcon}\n`;
+        });
+      });
+
+      if(!hasContent) {
+        alert('Selecione ao menos um contrato e atividades para gerar a mensagem.');
+        return;
+      }
+
+      closeDrawer('whatsappSelectionModal');
+      document.getElementById('whatsappTextOutput').value = text;
+      document.getElementById('whatsappOutputModal').classList.add('active');
+    }
+
+    function copyWhatsappText() {
+      const textarea = document.getElementById('whatsappTextOutput');
+      textarea.select();
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        alert('Texto copiado com sucesso para a área de transferência!');
+      });
+    }
+
+    function saveState() {
+      localStorage.setItem('app_os_db', JSON.stringify(appData));
+      renderAll();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if(tab === 'contratos') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-contratos').classList.add('active');
+      } else if(tab === 'recursos') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-recursos').classList.add('active');
+      } else if(tab === 'cronograma') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('tab-cronograma').classList.add('active');
+        renderCronograma(ganttFilter);
+      }
+    }
+
+    function closeDrawer(id) { document.getElementById(id).classList.remove('active'); }
+
+    function parseBrDate(str) {
+      if(!str) return null;
+      const parts = str.split('/');
+      if(parts.length !== 3) return null;
+      let day = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10) - 1;
+      let year = parseInt(parts[2], 10);
+      if(year < 100) year += 2000;
+      return new Date(year, month, day);
+    }
+
+    function isOverdue(dateStr, pct, status) {
+      if(pct === 100 || status === 'Paralisada') return false;
+      const d = parseBrDate(dateStr);
+      if(!d) return false;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return d < today;
+    }
+
+    function renderAll() {
+      renderFilterButtons();
+      renderCascos();
+      renderEquipes();
+      renderContratos();
+      renderCronogramaFilters();
+
+      if (activeContractIdToOpen) {
+        const cardToOpen = document.getElementById(`contract-card-${activeContractIdToOpen}`);
+        if (cardToOpen) {
+          cardToOpen.classList.add('open');
+        }
+        activeContractIdToOpen = null;
+      }
+    }
+
+    function renderFilterButtons() {
+      const cascosContainer = document.getElementById('filterCascosBtns');
+      let cascosHtml = `<button class="filter-btn ${selectedFilters.casco === 'todos' ? 'active' : ''}" onclick="setFilter('casco', 'todos', this)">Todos os Cascos</button>`;
+      appData.cascos.forEach(c => {
+        cascosHtml += `<button class="filter-btn ${selectedFilters.casco === c.nome ? 'active' : ''}" onclick="setFilter('casco', '${c.nome}', this)">${c.nome}</button>`;
+      });
+      cascosContainer.innerHTML = cascosHtml;
+
+      const membrosContainer = document.getElementById('filterMembrosBtns');
+      let membrosHtml = `<button class="filter-btn ${selectedFilters.membro === 'todos' ? 'active' : ''}" onclick="setFilter('membro', 'todos', this)">Todos os Membros</button>`;
+      appData.equipes.forEach(m => {
+        membrosHtml += `<button class="filter-btn ${selectedFilters.membro === m.nome ? 'active' : ''}" onclick="setFilter('membro', '${m.nome}', this)">${m.nome}</button>`;
+      });
+      membrosContainer.innerHTML = membrosHtml;
+    }
+
+    function setFilter(type, value, btnElement) {
+      selectedFilters[type] = value;
+      const parent = btnElement.parentElement;
+      parent.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btnElement.classList.add('active');
+      renderContratos();
+    }
+
+    // CRONOGRAMA / GANTT RENDERING
+    function renderCronogramaFilters() {
+      const container = document.getElementById('ganttFilterBtns');
+      let html = `<button class="filter-btn ${ganttFilter === 'todos' ? 'active' : ''}" onclick="renderCronograma('todos', this)">Todos</button>`;
+      appData.equipes.forEach(eq => {
+        html += `<button class="filter-btn ${ganttFilter === eq.nome ? 'active' : ''}" onclick="renderCronograma('${eq.nome}', this)">👤 ${eq.nome}</button>`;
+      });
+      appData.cascos.forEach(c => {
+        html += `<button class="filter-btn ${ganttFilter === c.nome ? 'active' : ''}" onclick="renderCronograma('${c.nome}', this)">⚓ ${c.nome}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderCronograma(filterVal = 'todos', btnEl = null) {
+      ganttFilter = filterVal;
+      if(btnEl) {
+        document.querySelectorAll('#ganttFilterBtns .filter-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+
+      const body = document.getElementById('ganttBody');
+      const activeContracts = appData.contratos.filter(c => !c.arquivado);
+
+      if(activeContracts.length === 0) {
+        body.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum contrato ativo para exibir no cronograma.</div>';
+        return;
+      }
+
+      let html = '';
+
+      activeContracts.forEach(c => {
+        const contractEquipes = Array.isArray(c.equipe) ? c.equipe : [c.equipe];
+
+        if(filterVal !== 'todos') {
+          const matchMembro = contractEquipes.some(m => m.trim().toLowerCase() === filterVal.trim().toLowerCase());
+          const matchCasco = c.casco.trim().toLowerCase() === filterVal.trim().toLowerCase();
+          if(!matchMembro && !matchCasco) return;
+        }
+
+        const equipeStr = contractEquipes.join(', ');
+
+        html += `
+          <div class="gantt-contract-block">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; border-bottom:1px dashed var(--border); padding-bottom:0.5rem;">
+              <strong>📋 ${c.nome} <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(Casco: ${c.casco} | 👤 ${equipeStr})</span></strong>
+              <span style="font-size:0.8rem; color:var(--text-muted);">📅 ${c.inicio} a ${c.termino}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        `;
+
+        if(c.atividades && c.atividades.length > 0) {
+          c.atividades.forEach(a => {
+            const atrasada = isOverdue(a.termino, a.pct, a.status);
+            const fillClass = a.pct === 100 ? 'done' : (atrasada ? 'atrasado' : '');
+            
+            html += `
+              <div class="gantt-timeline-row">
+                <div style="font-weight:600; font-size:0.85rem; word-break:break-word; line-height:1.3;" title="${a.descricao}">
+                  📌 ${a.descricao}
+                </div>
+                <div class="gantt-bar-track">
+                  <div class="gantt-bar-fill ${fillClass}" style="width: ${Math.max(a.pct, 5)}%;"></div>
+                  <div class="gantt-bar-text">${a.pct}% — ${a.inicio} até ${a.termino} ${atrasada ? '⚠️ ATRASADA' : ''}</div>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          html += `<div style="font-size:0.8rem; color:var(--text-muted);">Nenhuma atividade cadastrada.</div>`;
+        }
+
+        html += `</div></div>`;
+      });
+
+      body.innerHTML = html || '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum resultado para o filtro selecionado.</div>';
+    }
+
+    // CASCOS (COM DRAG AND DROP)
+    function openCascoDrawer(id = null) {
+      document.getElementById('cascoOverlay').classList.add('active');
+      if(id) {
+        const item = appData.cascos.find(c => c.id === id);
+        document.getElementById('cascoId').value = item.id;
+        document.getElementById('cascoNome').value = item.nome;
+      } else {
+        document.getElementById('cascoId').value = "";
+        document.getElementById('cascoNome').value = "";
+      }
+    }
+
+    function saveCasco(e) {
+      e.preventDefault();
+      const id = document.getElementById('cascoId').value;
+      const nome = document.getElementById('cascoNome').value;
+      if(id) {
+        const c = appData.cascos.find(x => x.id == id);
+        c.nome = nome;
+      } else {
+        appData.cascos.push({ id: Date.now(), nome });
+      }
+      saveState();
+      closeDrawer('cascoOverlay');
+    }
+
+    function deleteCasco(id) {
+      if(confirm('Excluir este casco?')) {
+        appData.cascos = appData.cascos.filter(c => c.id !== id);
+        saveState();
+      }
+    }
+
+    function renderCascos() {
+      const container = document.getElementById('cascos-list');
+      container.innerHTML = appData.cascos.length ? '' : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhum casco cadastrado.</span>';
+      
+      appData.cascos.forEach((c, idx) => {
+        const card = document.createElement('div');
+        card.className = 'simple-card';
+        card.draggable = true;
+        card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'casco', idx })); card.classList.add('dragging'); };
+        card.ondragend = () => card.classList.remove('dragging');
+        card.ondragover = (e) => e.preventDefault();
+        card.ondrop = (e) => {
+          e.preventDefault();
+          const raw = e.dataTransfer.getData('text/plain');
+          if(!raw) return;
+          const data = JSON.parse(raw);
+          if(data.type === 'casco' && data.idx !== idx) {
+            const moved = appData.cascos.splice(data.idx, 1)[0];
+            appData.cascos.splice(idx, 0, moved);
+            saveState();
+          }
+        };
+
+        card.innerHTML = `
+          <strong>⚓ ${c.nome}</strong>
+          <div class="simple-card-actions">
+            <button class="btn-sm" onclick="openCascoDrawer(${c.id})">✏️ Editar</button>
+            <button class="btn-sm" style="color:var(--danger-text)" onclick="deleteCasco(${c.id})">🗑️</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // EQUIPES / MEMBROS SEPARADOS POR SETOR (COM DRAG AND DROP)
+    function openEquipeDrawer(id = null) {
+      document.getElementById('equipeOverlay').classList.add('active');
+      if(id) {
+        const item = appData.equipes.find(e => e.id === id);
+        document.getElementById('equipeId').value = item.id;
+        document.getElementById('equipeNome').value = item.nome;
+        document.getElementById('equipeCat').value = item.categoria || item.setor || 'Marcenaria';
+      } else {
+        document.getElementById('equipeId').value = "";
+        document.getElementById('equipeNome').value = "";
+      }
+    }
+
+    function saveEquipe(e) {
+      e.preventDefault();
+      const id = document.getElementById('equipeId').value;
+      const nome = document.getElementById('equipeNome').value;
+      const categoria = document.getElementById('equipeCat').value;
+      if(id) {
+        const eq = appData.equipes.find(x => x.id == id);
+        eq.nome = nome;
+        eq.categoria = categoria;
+      } else {
+        appData.equipes.push({ id: Date.now(), nome, categoria });
+      }
+      saveState();
+      closeDrawer('equipeOverlay');
+    }
+
+    function deleteEquipe(id) {
+      if(confirm('Excluir este membro?')) {
+        appData.equipes = appData.equipes.filter(e => e.id !== id);
+        saveState();
+      }
+    }
+
+    function renderEquipes() {
+      const container = document.getElementById('equipes-sections-container');
+      const setores = ['Marcenaria', 'Serralheria', 'Administração'];
+      
+      let html = '';
+      setores.forEach(setor => {
+        const membrosDoSetor = appData.equipes.filter(eq => (eq.categoria || eq.setor || 'Marcenaria') === setor);
+        
+        html += `
+          <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.75rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.4rem;">
+              ${setor === 'Marcenaria' ? '🪵 Marcenaria' : (setor === 'Serralheria' ? '🔩 Serralheria' : '📊 Administração')} (${membrosDoSetor.length})
+            </h4>
+            <div class="grid-cards" id="setor-grid-${setor}" style="margin-bottom:0;">
+              ${membrosDoSetor.length === 0 ? '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhum membro neste setor.</span>' : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Preenche os cards com suporte a Drag & Drop
+      setores.forEach(setor => {
+        const membrosDoSetor = appData.equipes.filter(eq => (eq.categoria || eq.setor || 'Marcenaria') === setor);
+        const gridEl = document.getElementById(`setor-grid-${setor}`);
+        
+        membrosDoSetor.forEach((eq) => {
+          const globalIdx = appData.equipes.findIndex(x => x.id === eq.id);
+          const card = document.createElement('div');
+          card.className = 'simple-card';
+          card.draggable = true;
+          card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'membro', globalIdx })); card.classList.add('dragging'); };
+          card.ondragend = () => card.classList.remove('dragging');
+          card.ondragover = (e) => e.preventDefault();
+          card.ondrop = (e) => {
+            e.preventDefault();
+            const raw = e.dataTransfer.getData('text/plain');
+            if(!raw) return;
+            const data = JSON.parse(raw);
+            if(data.type === 'membro' && data.globalIdx !== globalIdx) {
+              const moved = appData.equipes.splice(data.globalIdx, 1)[0];
+              appData.equipes.splice(globalIdx, 0, moved);
+              saveState();
+            }
+          };
+
+          card.innerHTML = `
+            <div>
+              <div><strong>👤 ${eq.nome}</strong></div>
+            </div>
+            <div class="simple-card-actions">
+              <button class="btn-sm" onclick="openEquipeDrawer(${eq.id})">✏️ Editar</button>
+              <button class="btn-sm" style="color:var(--danger-text)" onclick="deleteEquipe(${eq.id})">🗑️</button>
+            </div>
+          `;
+          gridEl.appendChild(card);
+        });
+      });
+    }
+
+    // CONTRATOS
+    function openContractDrawer(id = null) {
+      if(!appData.cascos.length || !appData.equipes.length) {
+        alert('Cadastre pelo menos um Casco e um Membro na Aba 2 antes de criar um contrato.');
+        return;
+      }
+
+      const selectCasco = document.getElementById('cCasco');
+      selectCasco.innerHTML = appData.cascos.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+      
+      const equipeContainer = document.getElementById('cEquipesContainer');
+      let assignedMembers = [];
+
+      if(id) {
+        const c = appData.contratos.find(x => x.id === id);
+        document.getElementById('contractId').value = c.id;
+        document.getElementById('cNome').value = c.nome;
+        document.getElementById('cInicio').value = c.inicio;
+        document.getElementById('cTermino').value = c.termino;
+        document.getElementById('cCasco').value = c.casco;
+        assignedMembers = Array.isArray(c.equipe) ? c.equipe : (c.equipe ? [c.equipe] : []);
+        document.getElementById('btnDeleteContract').style.display = 'block';
+      } else {
+        document.getElementById('contractId').value = "";
+        document.getElementById('contractForm').reset();
+        document.getElementById('btnDeleteContract').style.display = 'none';
+      }
+
+      equipeContainer.innerHTML = appData.equipes.map(eq => `
+        <label class="multiselect-item">
+          <input type="checkbox" name="contractEquipes" value="${eq.nome}" ${assignedMembers.includes(eq.nome) ? 'checked' : ''}>
+          ${eq.nome} (${eq.categoria || 'Geral'})
+        </label>
+      `).join('');
+
+      document.getElementById('contractOverlay').classList.add('active');
+    }
+
+    function saveContract(e) {
+      e.preventDefault();
+      const id = document.getElementById('contractId').value;
+      
+      const checkboxes = document.querySelectorAll('input[name="contractEquipes"]:checked');
+      const selectedEquipes = Array.from(checkboxes).map(cb => cb.value);
+
+      if(selectedEquipes.length === 0) {
+        alert('Selecione ao menos um membro para a equipe responsável.');
+        return;
+      }
+
+      const rawNome = document.getElementById('cNome').value;
+
+      const data = {
+        id: id ? parseInt(id) : Date.now(),
+        nome: rawNome.toUpperCase(),
+        inicio: document.getElementById('cInicio').value,
+        termino: document.getElementById('cTermino').value,
+        casco: document.getElementById('cCasco').value,
+        equipe: selectedEquipes,
+        arquivado: false,
+        atividades: id ? (appData.contratos.find(x => x.id == id).atividades || []) : []
+      };
+
+      if(id) {
+        const idx = appData.contratos.findIndex(x => x.id == id);
+        data.arquivado = appData.contratos[idx].arquivado;
+        appData.contratos[idx] = data;
+      } else {
+        appData.contratos.push(data);
+      }
+      saveState();
+      closeDrawer('contractOverlay');
+    }
+
+    function deleteContract() {
+      const id = document.getElementById('contractId').value;
+      if(confirm('Tem certeza que deseja remover este contrato e todas as suas atividades?')) {
+        appData.contratos = appData.contratos.filter(x => x.id != id);
+        saveState();
+        closeDrawer('contractOverlay');
+      }
+    }
+
+    function toggleArquivarContract(e, id) {
+      e.stopPropagation();
+      const c = appData.contratos.find(x => x.id === id);
+      if(c) {
+        c.arquivado = !c.arquivado;
+        saveState();
+      }
+    }
+
+    function toggleArquivadosList() {
+      showArquivados = !showArquivados;
+      const listEl = document.getElementById('arquivados-list');
+      const btnEl = document.getElementById('btnToggleArqs');
+      const arqsCount = appData.contratos.filter(c => c.arquivado).length;
+
+      if(showArquivados) {
+        listEl.style.display = 'flex';
+        btnEl.innerHTML = `🔼 Ocultar Arquivados (${arqsCount})`;
+      } else {
+        listEl.style.display = 'none';
+        btnEl.innerHTML = `🔽 Ver Arquivados (${arqsCount})`;
+      }
+      renderContratos();
+    }
+
+    function toggleContractDrawer(card) {
+      card.classList.toggle('open');
+    }
+
+    function renderContratos() {
+      const container = document.getElementById('contracts-list');
+      const arqContainer = document.getElementById('arquivados-list');
+      container.innerHTML = '';
+      arqContainer.innerHTML = '';
+
+      let ativosCount = 0;
+      let arqsCount = 0;
+
+      appData.contratos.forEach((contract, index) => {
+        const contractEquipes = Array.isArray(contract.equipe) ? contract.equipe : [contract.equipe];
+
+        if (selectedFilters.casco !== 'todos' && contract.casco.trim() !== selectedFilters.casco.trim()) return;
+        if (selectedFilters.membro !== 'todos' && !contractEquipes.some(m => m.trim().toLowerCase() === selectedFilters.membro.trim().toLowerCase())) return;
+        if (selectedFilters.setor !== 'todos') {
+          const hasMatchingSector = contractEquipes.some(mName => {
+            const membroObj = appData.equipes.find(eq => eq.nome.trim().toLowerCase() === mName.trim().toLowerCase());
+            const setorMembro = membroObj ? (membroObj.categoria || membroObj.setor) : null;
+            return setorMembro && setorMembro.trim().toLowerCase() === selectedFilters.setor.trim().toLowerCase();
+          });
+          if (!hasMatchingSector) return;
+        }
+
+        let totalPct = 0;
+        let temAtraso = false;
+
+        if(contract.atividades && contract.atividades.length > 0) {
+          const sumPct = contract.atividades.reduce((acc, a) => acc + (a.pct || 0), 0);
+          totalPct = Math.round(sumPct / contract.atividades.length);
+          if(contract.atividades.some(a => isOverdue(a.termino, a.pct, a.status))) {
+            temAtraso = true;
+          }
+        }
+
+        if(totalPct === 100) temAtraso = false;
+
+        const card = document.createElement('div');
+        card.id = `contract-card-${contract.id}`;
+        card.className = `contract-card ${temAtraso ? 'atrasado' : ''}`;
+        card.draggable = !contract.arquivado;
+        card.dataset.index = index;
+
+        card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', index); card.classList.add('dragging'); };
+        card.ondragend = () => card.classList.remove('dragging');
+        card.ondragover = (e) => e.preventDefault();
+        card.ondrop = (e) => {
+          e.preventDefault();
+          const fromIndex = e.dataTransfer.getData('text/plain');
+          const toIndex = index;
+          const moved = appData.contratos.splice(fromIndex, 1)[0];
+          appData.contratos.splice(toIndex, 0, moved);
+          saveState();
+        };
+
+        const equipeStr = contractEquipes.join(', ');
+
+        card.innerHTML = `
+          <div class="contract-header-summary" onclick="toggleContractDrawer(this.parentElement)">
+            <div class="contract-top-row">
+              <div class="contract-title">
+                📋 ${contract.nome}
+                ${temAtraso ? '<span class="badge-atraso">⚠️ EM ATRASO</span>' : ''}
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill ${totalPct === 100 ? 'done' : ''}" style="width: ${totalPct}%"></div>
+                  <div class="progress-text-overlay">${totalPct}%</div>
+                </div>
+                <button class="btn-sm" onclick="event.stopPropagation(); openContractDrawer(${contract.id})">✏️ Editar</button>
+                <button class="btn-sm btn-warning" onclick="toggleArquivarContract(event, ${contract.id})" title="${contract.arquivado ? 'Desarquivar' : 'Arquivar'}">
+                  ${contract.arquivado ? '📂 Desarquivar' : '📦 Arquivar'}
+                </button>
+              </div>
+            </div>
+
+            <div class="contract-details-grid">
+              <div>Casco: <strong>${contract.casco}</strong></div>
+              <div>Prazo: <strong>${contract.inicio} a ${contract.termino}</strong></div>
+              <div>Equipe: <strong>${equipeStr}</strong></div>
+            </div>
+          </div>
+
+          <div class="contract-drawer-body" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h4 style="font-size:0.95rem; color:var(--text-muted);">Atividades do Contrato</h4>
+              <button class="btn-sm" onclick="openActivityDrawer(${contract.id})">➕ Adicionar Atividade</button>
+            </div>
+
+            <div class="activities-list" id="act-list-${contract.id}">
+              ${renderAtividadesHtml(contract)}
+            </div>
+          </div>
+        `;
+
+        if (contract.arquivado) {
+          arqContainer.appendChild(card);
+          arqsCount++;
+        } else {
+          container.appendChild(card);
+          ativosCount++;
+        }
+      });
+
+      if (ativosCount === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum contrato ativo encontrado.</div>';
+      }
+      if (arqsCount === 0) {
+        arqContainer.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.85rem;">Nenhum contrato arquivado.</div>';
+      }
+
+      document.getElementById('btnToggleArqs').innerHTML = `🔽 Ver Arquivados (${arqsCount})`;
+    }
+
+    function renderAtividadesHtml(contract) {
+      if(!contract.atividades || contract.atividades.length === 0) {
+        return '<span style="font-size:0.85rem; color:var(--text-muted);">Nenhuma atividade cadastrada neste contrato.</span>';
+      }
+
+      return contract.atividades.map((act, actIdx) => {
+        const statusAtivo = act.status || 'Andamento';
+        const atrasada = isOverdue(act.termino, act.pct, statusAtivo);
+        
+        return `
+          <div class="activity-card ${atrasada ? 'atrasado' : ''} ${statusAtivo === 'Paralisada' ? 'paralisada' : ''}" 
+               draggable="true" 
+               onclick="event.stopPropagation()" 
+               ondragstart="handleActDragStart(event, ${contract.id}, ${actIdx})"
+               ondragover="event.preventDefault()"
+               ondrop="handleActDrop(event, ${contract.id}, ${actIdx})"
+               ondragend="this.classList.remove('act-dragging')">
+            
+            <div class="activity-left">
+              <div class="activity-desc-area" id="view-mode-${contract.id}-${act.id}" title="${act.descricao}">
+                📌 ${act.descricao} ${atrasada ? '<span class="badge-atraso">⚠️ ATRASADA</span>' : ''}
+              </div>
+
+              <div class="activity-edit-mode" id="edit-mode-${contract.id}-${act.id}">
+                <input type="text" class="desc-input" value="${act.descricao}" id="desc-${contract.id}-${act.id}">
+                <input type="text" class="date-input" value="${act.inicio}" id="ini-${contract.id}-${act.id}" oninput="formatDateInput(this)">
+                <input type="text" class="date-input" value="${act.termino}" id="ter-${contract.id}-${act.id}" oninput="formatDateInput(this)">
+              </div>
+            </div>
+
+            <div class="activity-right">
+              <span class="activity-prazo">📅 ${act.inicio} - ${act.termino}</span>
+
+              <select class="status-select" onchange="setActivityStatus(event, ${contract.id}, ${act.id}, this.value)">
+                <option value="Andamento" ${statusAtivo === 'Andamento' ? 'selected' : ''}>⏳ Andamento</option>
+                <option value="Paralisada" ${statusAtivo === 'Paralisada' ? 'selected' : ''}>⏸️ Paralisada</option>
+              </select>
+
+              <div class="pct-btn-group">
+                ${[20, 40, 60, 80, 100].map(val => `
+                  <button class="pct-btn ${act.pct >= val ? 'active' : ''}" onclick="setActivityPct(event, ${contract.id}, ${act.id}, ${val})">${val}%</button>
+                `).join('')}
+              </div>
+
+              <div class="activity-actions-inline">
+                <button class="btn-sm btn-icon-only" id="btn-edit-${contract.id}-${act.id}" onclick="toggleEditActivity(event, ${contract.id}, ${act.id})" title="Editar">✏️</button>
+                <button class="btn-sm btn-icon-only" style="color:var(--danger-text)" onclick="deleteActivity(event, ${contract.id}, ${act.id})" title="Excluir">🗑️</button>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleActDragStart(e, contractId, actIdx) {
+      e.stopPropagation();
+      e.target.classList.add('act-dragging');
+      e.dataTransfer.setData('text/plain', JSON.stringify({ contractId, actIdx }));
+    }
+
+    function handleActDrop(e, contractId, toActIdx) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rawData = e.dataTransfer.getData('text/plain');
+      if(!rawData) return;
+      
+      const { contractId: fromContractId, actIdx: fromActIdx } = JSON.parse(rawData);
+      
+      if(fromContractId === contractId && fromActIdx !== toActIdx) {
+        activeContractIdToOpen = contractId;
+        const c = appData.contratos.find(x => x.id === contractId);
+        const movedAct = c.atividades.splice(fromActIdx, 1)[0];
+        c.atividades.splice(toActIdx, 0, movedAct);
+        saveState();
+      }
+    }
+
+    function toggleEditActivity(e, contractId, actId) {
+      e.stopPropagation();
+      activeContractIdToOpen = contractId;
+
+      const viewMode = document.getElementById(`view-mode-${contractId}-${actId}`);
+      const editMode = document.getElementById(`edit-mode-${contractId}-${actId}`);
+      const btnEdit = document.getElementById(`btn-edit-${contractId}-${actId}`);
+
+      if (editMode.style.display === 'flex') {
+        const rawDesc = document.getElementById(`desc-${contractId}-${actId}`).value;
+        const newIni = document.getElementById(`ini-${contractId}-${actId}`).value;
+        const newTer = document.getElementById(`ter-${contractId}-${actId}`).value;
+
+        const c = appData.contratos.find(x => x.id === contractId);
+        const a = c.atividades.find(x => x.id === actId);
+        if(rawDesc) a.descricao = formatSentenceCase(rawDesc);
+        if(newIni) a.inicio = newIni;
+        if(newTer) a.termino = newTer;
+
+        saveState();
+      } else {
+        viewMode.style.display = 'none';
+        editMode.style.display = 'flex';
+        btnEdit.innerHTML = '💾';
+        btnEdit.title = 'Salvar';
+      }
+    }
+
+    function openActivityDrawer(contractId) {
+      document.getElementById('actContractId').value = contractId;
+      document.getElementById('activityOverlay').classList.add('active');
+      setActMode('single');
+      document.getElementById('actSingleForm').reset();
+    }
+
+    function setActMode(mode) {
+      if(mode === 'single') {
+        document.getElementById('actSingleForm').style.display = 'block';
+        document.getElementById('actBatchForm').style.display = 'none';
+      } else {
+        document.getElementById('actSingleForm').style.display = 'none';
+        document.getElementById('actBatchForm').style.display = 'block';
+      }
+    }
+
+    function setActivityPct(e, contractId, actId, pct) {
+      e.stopPropagation();
+      activeContractIdToOpen = contractId;
+      const c = appData.contratos.find(x => x.id === contractId);
+      const a = c.atividades.find(x => x.id === actId);
+      a.pct = (a.pct === pct) ? 0 : pct;
+      saveState();
+    }
+
+    function setActivityStatus(e, contractId, actId, status) {
+      e.stopPropagation();
+      activeContractIdToOpen = contractId;
+      const c = appData.contratos.find(x => x.id === contractId);
+      const a = c.atividades.find(x => x.id === actId);
+      a.status = status;
+      saveState();
+    }
+
+    function saveSingleActivity(e) {
+      e.preventDefault();
+      const contractId = parseInt(document.getElementById('actContractId').value);
+      activeContractIdToOpen = contractId;
+      const c = appData.contratos.find(x => x.id === contractId);
+
+      const rawDesc = document.getElementById('aDesc').value;
+
+      c.atividades.push({
+        id: Date.now(),
+        descricao: formatSentenceCase(rawDesc),
+        inicio: document.getElementById('aInicio').value,
+        termino: document.getElementById('aTermino').value,
+        pct: 0,
+        status: 'Andamento'
+      });
+
+      saveState();
+      closeDrawer('activityOverlay');
+    }
+
+    function deleteActivity(e, contractId, actId) {
+      e.stopPropagation();
+      activeContractIdToOpen = contractId;
+      if(confirm('Excluir esta atividade?')) {
+        const c = appData.contratos.find(x => x.id === contractId);
+        c.atividades = c.atividades.filter(x => x.id !== actId);
+        saveState();
+      }
+    }
+
+    function updateBatchPreview() {
+      const text = document.getElementById('batchText').value;
+      const lines = text.split('\n').filter(l => l.trim() !== '');
+      const dateRegex = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+      
+      let parsed = [];
+      lines.forEach(line => {
+        const dates = line.match(dateRegex);
+        if(dates && dates.length >= 2) {
+          const desc = formatSentenceCase(line.replace(dateRegex, ''));
+          parsed.push({ desc, inicio: dates[0], termino: dates[1] });
+        }
+      });
+
+      const previewBox = document.getElementById('batchPreview');
+      if(parsed.length > 0) {
+        previewBox.innerHTML = `<strong>Atividades detectadas (${parsed.length}):</strong><br>` +
+          parsed.map(p => `• ${p.desc} (${p.inicio} a ${p.termino})`).join('<br>');
+      } else {
+        previewBox.innerHTML = 'Prévia: Nenhuma atividade detectada no formato (Descrição DataInicio DataTermino).';
+      }
+    }
+
+    function saveBatchActivities(e) {
+      e.preventDefault();
+      const contractId = parseInt(document.getElementById('actContractId').value);
+      activeContractIdToOpen = contractId;
+      const c = appData.contratos.find(x => x.id === contractId);
+      
+      const text = document.getElementById('batchText').value;
+      const lines = text.split('\n').filter(l => l.trim() !== '');
+      const dateRegex = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+
+      lines.forEach(line => {
+        const dates = line.match(dateRegex);
+        if(dates && dates.length >= 2) {
+          const rawDesc = line.replace(dateRegex, '');
+          c.atividades.push({
+            id: Date.now() + Math.random(),
+            descricao: formatSentenceCase(rawDesc) || 'Atividade sem título',
+            inicio: dates[0],
+            termino: dates[1],
+            pct: 0,
+            status: 'Andamento'
+          });
+        }
+      });
+
+      saveState();
+      closeDrawer('activityOverlay');
+      document.getElementById('batchText').value = '';
+    }
+
+    function exportarBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      const dataAtual = new Date().toISOString().slice(0, 10);
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `os_contratos_backup_${dataAtual}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importarBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const dadosImportados = JSON.parse(e.target.result);
+          if (dadosImportados.contratos && dadosImportados.cascos) {
+            if (confirm(`Deseja importar o backup? Dados atuais serão substituídos.`)) {
+              appData = dadosImportados;
+              saveState();
+              alert("Backup importado com sucesso!");
+            }
+          } else {
+            alert("Arquivo JSON incompatível.");
+          }
+        } catch (err) {
+          alert("Erro ao ler o arquivo de backup.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
